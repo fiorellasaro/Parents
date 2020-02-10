@@ -7,12 +7,7 @@
           <h1 class="mt-60">Ingresa para ver los datos</h1>
           <br />
           <br />
-          <Form
-            ref="loginForm"
-            :model="loginForm"
-            :rules="loginFormValidate"
-            label-position="top"
-          >
+          <Form ref="loginForm" :model="loginForm" :rules="loginFormValidate" label-position="top">
             <FormItem prop="user" label="Usuario">
               <Input v-model="loginForm.user"></Input>
             </FormItem>
@@ -30,25 +25,38 @@
         <div class="total-info">
           <p>Total: {{ this.items.length }}</p>
           <Button :loading="updateLoader" @click="update">Actualizar</Button>
-          <download-csv
-            :data="excelDataChildsAndParents(items)"
-            name="ReporteTotal.csv"
-          >
+          <download-csv :data="excelDataChildsAndParents(items)" name="ReporteTotal.csv">
             <Button>REPORTE TOTAL</Button>
           </download-csv>
         </div>
       </div>
       <br />
-      <p>
-        A continuación se muestra la lista de familiares tutelares:
-      </p>
+      <p>A continuación se muestra la lista de familiares tutelares:</p>
       <br />
       <br />
       <template>
         <!-- <download-csv :data="excelDataParents(items)">
               <Button>REPORTE TUTOR</Button>
-            </download-csv> -->
+        </download-csv>-->
         <div class="controls">
+          <div>
+            <label for="filter-range">Filtrar por fecha</label>
+            <VueHotelDatepicker
+              id="filter-range"
+              :format="'DD-MM-YYYY'"
+              :minDate="'15-12-2019'"
+              :fromText="'De'"
+              :toText="'a'"
+              :confirmText="'Aplicar'"
+              :weekList="['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']"
+              :monthList="['Ene.', 'Feb.', 'Mar.', 'Abr.', 'May.', 'Jun.', 'Jul.', 'Ago.', 'Sep.', 'Oct.', 'Nov.', 'Dic.']"
+              resetText="borrar"
+              @confirm="confirm"
+            ></VueHotelDatepicker>
+            <b-button @click="filterByDate()">Filtrar</b-button>
+            <p>{{this.dateFilter}}</p>
+          </div>
+
           <div class="controls-filter">
             <b-form-group class="mb-0">
               <b-input-group size="sm">
@@ -68,53 +76,38 @@
               class="mb-0"
             >
               <b-form-checkbox-group v-model="filterOn" class="mt-1">
-                <b-form-checkbox value="identityDocumentNumber"
-                  >Número de documento</b-form-checkbox
-                >
+                <b-form-checkbox value="identityDocumentNumber">Número de documento</b-form-checkbox>
                 <b-form-checkbox value="names">Nombre</b-form-checkbox>
                 <b-form-checkbox value="surname">Apellido</b-form-checkbox>
                 <b-form-checkbox value="email">Correo</b-form-checkbox>
-                <b-form-checkbox value="birthday"
-                  >fecha de cumpleaños</b-form-checkbox
-                >
+                <b-form-checkbox value="birthday">fecha de cumpleaños</b-form-checkbox>
               </b-form-checkbox-group>
               <b-input-group-append>
                 <b-button @click="filterButton(inputFilter)">Filtrar</b-button>
-                <b-button :disabled="!filter" @click="deleteFilter"
-                  >Borrar</b-button
-                >
+                <b-button :disabled="!filter" @click="deleteFilter">Borrar</b-button>
               </b-input-group-append>
             </b-form-group>
 
             <div v-if="filterState" class="header-info">
-              <download-csv
-                :data="excelDataChildsAndParents(this.filtertotal)"
-                class="mt-2"
-              >
-                <Button>REPORTE FILTRO </Button>
+              <download-csv :data="excelDataChildsAndParents(this.filtertotal)" class="mt-2">
+                <Button>REPORTE FILTRO</Button>
               </download-csv>
             </div>
-          </div>
-
-          <div>
-            <label for="filter-range"></label>
-            <input type="date" id="filter-range" />
           </div>
         </div>
 
         <div class="pagination mt-3">
           <b-form-group
             label="Por página"
+            label-cols-sm="6"
+            label-cols-md="4"
+            label-cols-lg="3"
+            label-align-sm="right"
             label-size="sm"
             label-for="perPageSelect"
             class="mb-0"
           >
-            <b-form-select
-              v-model="perPage"
-              id="perPageSelect"
-              size="sm"
-              :options="pageOptions"
-            ></b-form-select>
+            <b-form-select v-model="perPage" id="perPageSelect" size="sm" :options="pageOptions"></b-form-select>
           </b-form-group>
 
           <div class="my-1">
@@ -122,7 +115,6 @@
               v-model="currentPage"
               :total-rows="totalRows"
               :per-page="perPage"
-              label-align-sm="right"
               align="fill"
               size="sm"
               class="my-0"
@@ -145,41 +137,25 @@
           :sort-direction="sortDirection"
           @filtered="onFiltered"
         >
-          <template v-slot:cell(name)="row">
-            {{ row.value }}
-          </template>
+          <template v-slot:cell(name)="row">{{ row.value }}</template>
 
           <template v-slot:cell(actions)="row">
             <b-button
               size="sm"
               @click="info(row.item, row.index, $event.target)"
               class="mr-1"
-            >
-              Ver hijos
-            </b-button>
+            >Ver hijos</b-button>
             <b-button size="sm" @click="row.toggleDetails">
               {{ row.detailsShowing ? "Cerrar" : "Mostrar" }} Contrato
               <!-- Contrato -->
             </b-button>
-            <!-- <b-button size="sm">
-              <a :href="row.item.contract" target="_blank" download="myPrettyFileName.png">
-                <i class="fa fa-download" aria-hidden="true"></i>
-              </a>
-            </b-button> -->
-            <!-- <a
-              :href="row.item.contract"
-              target="_blank"
-              download="myPrettyFileName.pdf"
-            >
-            Descargar
-            </a> -->
           </template>
 
           <template v-slot:row-details="row">
             <b-card>
               <!-- <div v-for="(value, key) in row" :key="key">
                 <a :href='value.contract'>link del contrato</a>
-              </div> -->
+              </div>-->
               <!-- <a :href="row.item.contract" target="_blank">Link del contrato</a> -->
 
               <iframe
@@ -192,18 +168,11 @@
           </template>
         </b-table>
 
-        <b-modal
-          :id="infoModal.id"
-          :title="infoModal.title"
-          ok-only
-          @hide="resetInfoModal"
-        >
+        <b-modal :id="infoModal.id" :title="infoModal.title" ok-only @hide="resetInfoModal">
           <div v-for="(value, key) in infoModal.content" :key="key">
             <p>Nombres: {{ value.names }}</p>
             <p>Apellidos: {{ value.surname }}</p>
-            <p v-if="value.birthday">
-              Fecha de nacimiento: {{ value.birthday.slice(0, 10) }}
-            </p>
+            <p v-if="value.birthday">Fecha de nacimiento: {{ value.birthday.slice(0, 10) }}</p>
             <p>Parentesto: {{ value.relative }}</p>
             <hr />
           </div>
@@ -219,10 +188,15 @@ import moment from "moment";
 import Vue from "vue";
 import JsonCSV from "vue-json-csv";
 Vue.component("downloadCsv", JsonCSV);
+import VueHotelDatepicker from "@northwalker/vue-hotel-datepicker";
 
 export default {
+  components: {
+    VueHotelDatepicker
+  },
   data() {
     return {
+      dateFilter: {},
       updateLoader: false,
       inputFilter: null,
       filterState: false,
@@ -326,14 +300,6 @@ export default {
       // this.infoModal.content = JSON.stringify(item.childs, null, 2);
       this.infoModal.content = item.childs;
       this.$root.$emit("bv::show::modal", this.infoModal.id, button);
-    },
-    download(item, index, button) {
-      var browser = browser || chrome;
-      var downloading = browser.downloads.download({
-        url: item.contract,
-        filename: item.identityDocumentNumber,
-        conflictAction: "uniquify"
-      });
     },
     resetInfoModal() {
       this.infoModal.title = "";
@@ -500,6 +466,34 @@ export default {
         .finally(() => {
           this.showData = true;
         });
+    },
+    confirm: function(dateFil) {
+      this.dateFilter = dateFil;
+    },
+
+    filterByDate: function() {
+      let dateEnd = moment(this.dateFilter.end).format("MM-DD-YYYY");
+      let dateStart = moment(this.dateFilter.start).format("MM-DD-YYYY");
+      let itemsFilter = []
+      for(let i=0; i<this.items.length; i++){
+        let dateParent = moment(this.items[i].date).format('MM-DD-YYYY')
+        if(this.dateCheck(dateStart, dateEnd, dateParent)){
+            itemsFilter.push(this.items[i])
+        }
+      }
+
+    },
+
+    dateCheck(from, to, check) {
+      var fDate, lDate, cDate;
+      fDate = Date.parse(from);
+      lDate = Date.parse(to);
+      cDate = Date.parse(check);
+
+      if (cDate <= lDate && cDate >= fDate) {
+        return true;
+      }
+      return false;
     }
 
     // computed: {
@@ -525,6 +519,7 @@ export default {
 };
 </script>
 
+
 <style>
 .header-info {
   display: flex;
@@ -543,7 +538,7 @@ export default {
 .controls {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: space-around;
 }
 
 .controls-filter {
